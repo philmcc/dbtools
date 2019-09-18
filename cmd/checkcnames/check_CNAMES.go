@@ -17,6 +17,7 @@ func main() {
 	//var CreateManagementTable = flag.Bool("create-management-table", false, "Creates the management table needed for component management - Default FALSE")
 	var cluster = flag.String("cluster", "%", "Cluster to use - i.e. tii, marks ... Only enter one at a time.")
 	var env = flag.String("env", "%", "Environments to use - i.e. live, sprint, dev ... Only enter one at a time.")
+	var host = flag.String("host", "1", "host to check - i.e. db-tii01.s1prod Only enter one.")
 	//var mapCluster= flag.Bool("map", false, "map a cluster - requires cluster and env parameters and will begin with the master cname")
 	//var insertCNAME = flag.Bool("insertCname", false, "inserts a CNAME - requires a cluster flag - Default FALSE")
 	//var cname = flag.String("cname", "", "Cluster to be used (used with other flags")
@@ -39,8 +40,13 @@ func main() {
 	}
 	//	fmt.Println("Successfully Connected to: ", admindbname)
 
-	fmt.Println("Finding CNAMES for Cluster: ", *cluster, " in Env: ", *env)
-	admindb.GetCnamesForClusterEnv(admindbConn, myEnv, myCluster, true)
+	if *host == "1" {
+		fmt.Println("Finding CNAMES for Cluster: ", *cluster, " in Env: ", *env)
+	} else {
+		fmt.Println("Finding CNAMES for Host: ", *host)
+	}
+
+	admindb.GetCnamesForClusterEnv(admindbConn, myEnv, myCluster, true, *host)
 
 	/*	if *CreateManagementTable == true {
 			admindb.CreateManagementTable(admindb_conn)
