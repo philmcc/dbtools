@@ -11,7 +11,8 @@ CREATE TABLE clusters  (
   CREATE TABLE environments (
   env_id SERIAL PRIMARY KEY,
   env TEXT,
-  account_id integer REFERENCES account(account_id)
+  account_id integer REFERENCES account(account_id),
+  "AWS" boolean NOT NULL DEFAULT false
   );
 
 CREATE TABLE cnames (
@@ -294,3 +295,84 @@ INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select clus
 
 INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'tii'), (select env_id from environments where env = 'upgrade'),'tii-master.upgrade.iparadigms.com',1);
 INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'tii'), (select env_id from environments where env = 'upgrade'),'tii-slave1.upgrade.iparadigms.com',11);
+
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'uk'), (select env_id from environments where env = 'sprint'),'uk-master.sprint.iparadigms.com',1);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'uk'), (select env_id from environments where env = 'sprint'),'uk-slave1.sprint.iparadigms.com',11);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'uk'), (select env_id from environments where env = 'sprint'),'uk-slave2.sprint.iparadigms.com',12);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'uk'), (select env_id from environments where env = 'sprint'),'uk-backup.sprint.iparadigms.com',41);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'uk'), (select env_id from environments where env = 'sprint'),'uk-cron.sprint.iparadigms.com',31);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'uk'), (select env_id from environments where env = 'sprint'),'uk-relay.sprint.iparadigms.com',21);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'uk'), (select env_id from environments where env = 'sprint'),'uk-tip.sprint.iparadigms.com',22);
+
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'uk'), (select env_id from environments where env = 'live'),'uk-master.live.iparadigms.com',1);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'uk'), (select env_id from environments where env = 'live'),'uk-slave1.live.iparadigms.com',11);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'uk'), (select env_id from environments where env = 'live'),'uk-slave2.live.iparadigms.com',12);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'uk'), (select env_id from environments where env = 'live'),'uk-slave3.live.iparadigms.com',13);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'uk'), (select env_id from environments where env = 'live'),'uk-slave4.live.iparadigms.com',14);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'uk'), (select env_id from environments where env = 'live'),'uk-backup.live.iparadigms.com',41);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'uk'), (select env_id from environments where env = 'live'),'uk-cron.live.iparadigms.com',31);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'uk'), (select env_id from environments where env = 'live'),'uk-relay.live.iparadigms.com',21);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'uk'), (select env_id from environments where env = 'live'),'uk-tip.live.iparadigms.com',22);
+
+
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'uk'), (select env_id from environments where env = 'dev'),'uk-master.dev.iparadigms.com',1);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'uk'), (select env_id from environments where env = 'dev'),'uk-slave1.dev.iparadigms.com',11);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'uk'), (select env_id from environments where env = 'dev'),'uk-slave2.dev.iparadigms.com',12);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'uk'), (select env_id from environments where env = 'dev'),'uk-backup.dev.iparadigms.com',41);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'uk'), (select env_id from environments where env = 'dev'),'uk-cron.dev.iparadigms.com',31);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'uk'), (select env_id from environments where env = 'dev'),'uk-relay.dev.iparadigms.com',21);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'uk'), (select env_id from environments where env = 'dev'),'uk-tip.dev.iparadigms.com',22);
+
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'global'), (select env_id from environments where env = 'sprint'),'global-master.sprint.iparadigms.com',1);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'global'), (select env_id from environments where env = 'sprint'),'global-slave1.sprint.iparadigms.com',11);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'global'), (select env_id from environments where env = 'sprint'),'global-slave2.sprint.iparadigms.com',12);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'global'), (select env_id from environments where env = 'sprint'),'global-backup.sprint.iparadigms.com',41);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'global'), (select env_id from environments where env = 'sprint'),'global-cron.sprint.iparadigms.com',31);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'global'), (select env_id from environments where env = 'sprint'),'global-relay.sprint.iparadigms.com',21);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'global'), (select env_id from environments where env = 'sprint'),'global-tip.sprint.iparadigms.com',22);
+
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'global'), (select env_id from environments where env = 'live'),'global-master.live.iparadigms.com',1);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'global'), (select env_id from environments where env = 'live'),'global-slave1.live.iparadigms.com',11);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'global'), (select env_id from environments where env = 'live'),'global-slave2.live.iparadigms.com',12);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'global'), (select env_id from environments where env = 'live'),'global-slave3.live.iparadigms.com',13);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'global'), (select env_id from environments where env = 'live'),'global-slave4.live.iparadigms.com',14);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'global'), (select env_id from environments where env = 'live'),'global-backup.live.iparadigms.com',41);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'global'), (select env_id from environments where env = 'live'),'global-cron.live.iparadigms.com',31);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'global'), (select env_id from environments where env = 'live'),'global-relay.live.iparadigms.com',21);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'global'), (select env_id from environments where env = 'live'),'global-tip.live.iparadigms.com',22);
+
+
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'global'), (select env_id from environments where env = 'dev'),'global-master.dev.iparadigms.com',1);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'global'), (select env_id from environments where env = 'dev'),'global-slave1.dev.iparadigms.com',11);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'global'), (select env_id from environments where env = 'dev'),'global-slave2.dev.iparadigms.com',12);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'global'), (select env_id from environments where env = 'dev'),'global-backup.dev.iparadigms.com',41);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'global'), (select env_id from environments where env = 'dev'),'global-cron.dev.iparadigms.com',31);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'global'), (select env_id from environments where env = 'dev'),'global-relay.dev.iparadigms.com',21);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'global'), (select env_id from environments where env = 'dev'),'global-tip.dev.iparadigms.com',22);
+
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'ares'), (select env_id from environments where env = 'sprint'),'ares-master.sprint.iparadigms.com',1);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'ares'), (select env_id from environments where env = 'sprint'),'ares-slave1.sprint.iparadigms.com',11);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'ares'), (select env_id from environments where env = 'sprint'),'ares-slave2.sprint.iparadigms.com',12);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'ares'), (select env_id from environments where env = 'sprint'),'ares-backup.sprint.iparadigms.com',41);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'ares'), (select env_id from environments where env = 'sprint'),'ares-cron.sprint.iparadigms.com',31);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'ares'), (select env_id from environments where env = 'sprint'),'ares-relay.sprint.iparadigms.com',21);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'ares'), (select env_id from environments where env = 'sprint'),'ares-tip.sprint.iparadigms.com',22);
+
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'ares'), (select env_id from environments where env = 'live'),'ares-master.live.iparadigms.com',1);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'ares'), (select env_id from environments where env = 'live'),'ares-slave1.live.iparadigms.com',11);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'ares'), (select env_id from environments where env = 'live'),'ares-slave2.live.iparadigms.com',12);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'ares'), (select env_id from environments where env = 'live'),'ares-slave3.live.iparadigms.com',13);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'ares'), (select env_id from environments where env = 'live'),'ares-slave4.live.iparadigms.com',14);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'ares'), (select env_id from environments where env = 'live'),'ares-backup.live.iparadigms.com',41);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'ares'), (select env_id from environments where env = 'live'),'ares-cron.live.iparadigms.com',31);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'ares'), (select env_id from environments where env = 'live'),'ares-relay.live.iparadigms.com',21);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'ares'), (select env_id from environments where env = 'live'),'ares-tip.live.iparadigms.com',22);
+
+
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'ares'), (select env_id from environments where env = 'dev'),'ares-master.dev.iparadigms.com',1);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'ares'), (select env_id from environments where env = 'dev'),'ares-slave1.dev.iparadigms.com',11);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'ares'), (select env_id from environments where env = 'dev'),'ares-slave2.dev.iparadigms.com',12);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'ares'), (select env_id from environments where env = 'dev'),'ares-backup.dev.iparadigms.com',41);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'ares'), (select env_id from environments where env = 'dev'),'ares-cron.dev.iparadigms.com',31);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'ares'), (select env_id from environments where env = 'dev'),'ares-relay.dev.iparadigms.com',21);
+INSERT INTO cnames (cluster_id, env_id, cname, cname_order) VALUES ((select cluster_id from clusters where cluster = 'ares'), (select env_id from environments where env = 'dev'),'ares-tip.dev.iparadigms.com',22);

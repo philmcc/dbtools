@@ -12,9 +12,9 @@ import (
 
 func main() {
 	// Set up and parse command line flags
-	var InitCnamesTables = flag.Bool("InitCnamesTables", false, "Inits the CNAMES db tables - Default FALSE")
-	var dropcnamestables = flag.Bool("dropCnamesTables", false, "Drops the CNAMES db tables - Default FALSE")
-	var CreateManagementTable = flag.Bool("create-management-table", false, "Creates the management table needed for component management - Default FALSE")
+	//var InitCnamesTables = flag.Bool("InitCnamesTables", false, "Inits the CNAMES db tables - Default FALSE")
+	//var dropcnamestables = flag.Bool("dropCnamesTables", false, "Drops the CNAMES db tables - Default FALSE")
+	//var CreateManagementTable = flag.Bool("create-management-table", false, "Creates the management table needed for component management - Default FALSE")
 	var cluster = flag.String("cluster", "%", "Cluster to use - i.e. tii, marks ... Only enter one at a time.")
 	var env = flag.String("env", "%", "Environments to use - i.e. live, sprint, dev ... Only enter one at a time.")
 	//var mapCluster= flag.Bool("map", false, "map a cluster - requires cluster and env parameters and will begin with the master cname")
@@ -32,27 +32,32 @@ func main() {
 	var my_env string
 	my_env = *env
 
-	admindb_conn, admindbname := admindb.Connect_to_admin_db()
+	admindb_conn, _ := admindb.Connect_to_admin_db()
 	err := admindb_conn.Ping()
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Successfully Connected to: ", admindbname)
+	//	fmt.Println("Successfully Connected to: ", admindbname)
 
-	if *CreateManagementTable == true {
-		admindb.CreateManagementTable(admindb_conn)
-	} else {
-		if *InitCnamesTables == true {
-			admindb.InitCnamesTables(admindb_conn)
+	fmt.Println("Finding CNAMES for Cluster: ", *cluster, " in Env: ", *env)
+	admindb.GetCnamesForClusterEnv(admindb_conn, my_env, my_cluster, true)
+
+	/*	if *CreateManagementTable == true {
+			admindb.CreateManagementTable(admindb_conn)
 		} else {
-			if *dropcnamestables == true {
-				admindb.DropCnameTables(admindb_conn)
+			if *InitCnamesTables == true {
+				admindb.InitCnamesTables(admindb_conn)
 			} else {
-				fmt.Println("Finding CNAMES for Cluster: ", *cluster, " in Env: ", *env)
-				admindb.GetCnamesForClusterEnv(admindb_conn, my_env, my_cluster, true)
+				if *dropcnamestables == true {
+					admindb.DropCnameTables(admindb_conn)
+				} else {
+					fmt.Println("Finding CNAMES for Cluster: ", *cluster, " in Env: ", *env)
+					admindb.GetCnamesForClusterEnv(admindb_conn, my_env, my_cluster, true)
+				}
 			}
 		}
-	}
+
+	*/
 }
 
 //

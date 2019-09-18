@@ -15,12 +15,12 @@ func main() {
 	var env = flag.String("env", "%", "Environments to use - i.e. live, sprint, dev ... Only enter one at a time.")
 	//var mapCluster= flag.Bool("map", false, "map a cluster - requires cluster and env parameters and will begin with the master cname")
 
-	admindb_conn, admindbname := dbadmin.Connect_to_admin_db()
+	admindb_conn, _ := dbadmin.Connect_to_admin_db()
 	err := admindb_conn.Ping()
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Successfully Connected to: ", admindbname)
+	//fmt.Println("Successfully Connected to: ", admindbname)
 
 	flag.Parse()
 

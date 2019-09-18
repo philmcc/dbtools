@@ -18,7 +18,7 @@ const (
 	host = "ip-dbhub01.s2prod"
 	port = 5432
 	user = "postgres"
-	//password = "red*alert"
+	//password = ""
 	dbname = "dbtools"
 )
 
@@ -652,7 +652,7 @@ func Get_run_id(source string) (run_id int) {
 
 func GetHostList(env string, cluster string, hostname string, account_id int) (returned_hosts []PsqlHost) {
 
- //fmt.Println("hostname is: ", hostname)
+	//fmt.Println("hostname is: ", hostname)
 	admindb_conn, admindbname := Connect_to_admin_db()
 
 	err := admindb_conn.Ping()
@@ -660,61 +660,58 @@ func GetHostList(env string, cluster string, hostname string, account_id int) (r
 		log.Fatal(err)
 	}
 	fmt.Println("Successfully Connected to: ", admindbname)
- var sqlStatement string
+	var sqlStatement string
 
+	if hostname != "none" {
 
- if hostname != "none" {
-
-	sqlStatement = `SELECT node_id, hostname, ip_address, collect_stats, account_id
+		sqlStatement = `SELECT node_id, hostname, ip_address, collect_stats, account_id
 			FROM  node
 			WHERE hostname ilike TRIM($1)
 			AND account_id = $2;`
 
-			var current_host PsqlHost
+		var current_host PsqlHost
 
-			row := admindb_conn.QueryRow(sqlStatement, hostname, account_id)
-			switch err := row.Scan(&current_host.HostID, &current_host.HostName, &current_host.IPAddr, &current_host.Stats, &current_host.AccountID); err {
-			case sql.ErrNoRows:
-				fmt.Println("No matching hosts were returned!")
-			case nil:
-				returned_hosts = append(returned_hosts, current_host)
-			default:
-				panic(err)
-			}
- } else {
-	 sqlStatement = `SELECT node_id, hostname, ip_address, collect_stats, account_id
+		row := admindb_conn.QueryRow(sqlStatement, hostname, account_id)
+		switch err := row.Scan(&current_host.HostID, &current_host.HostName, &current_host.IPAddr, &current_host.Stats, &current_host.AccountID); err {
+		case sql.ErrNoRows:
+			fmt.Println("No matching hosts were returned!")
+		case nil:
+			returned_hosts = append(returned_hosts, current_host)
+		default:
+			panic(err)
+		}
+	} else {
+		sqlStatement = `SELECT node_id, hostname, ip_address, collect_stats, account_id
 		 FROM  node
 		 WHERE env_id in (select env_id from environments where env ilike TRIM($1))
 		 AND cluster_id in (select cluster_id from clusters where cluster ilike TRIM($2));`
 
+		var current_host PsqlHost
 
-	var current_host PsqlHost
-
-//	rows, err := admindb_conn.Query(sqlStatement, env, cluster)
-	//if err != nil {
+		//	rows, err := admindb_conn.Query(sqlStatement, env, cluster)
+		//if err != nil {
 		//panic(err)// handle this error better than this
-	//}
-	rows, err := admindb_conn.Query(sqlStatement, env, cluster)
-	if err != nil {
-		panic(err)
-		// handle this error better than this
-	}
-	defer rows.Close()
-	for rows.Next() {
-		err = rows.Scan(&current_host.HostID, &current_host.HostName, &current_host.IPAddr, &current_host.Stats, &current_host.AccountID)
+		//}
+		rows, err := admindb_conn.Query(sqlStatement, env, cluster)
 		if err != nil {
-			// handle this error
+			panic(err)
+			// handle this error better than this
+		}
+		defer rows.Close()
+		for rows.Next() {
+			err = rows.Scan(&current_host.HostID, &current_host.HostName, &current_host.IPAddr, &current_host.Stats, &current_host.AccountID)
+			if err != nil {
+				// handle this error
+				panic(err)
+			}
+			returned_hosts = append(returned_hosts, current_host)
+		}
+		// get any error encountered during iteration
+		err = rows.Err()
+		if err != nil {
 			panic(err)
 		}
-		returned_hosts = append(returned_hosts, current_host)
 	}
-	// get any error encountered during iteration
-	err = rows.Err()
-	if err != nil {
-		panic(err)
-	}
-}
-
 
 	admindb_conn.Close()
 
