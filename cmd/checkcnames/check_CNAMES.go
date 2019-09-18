@@ -27,20 +27,20 @@ func main() {
 
 	// get a connection to the admin db
 
-	var my_cluster string
-	my_cluster = *cluster
-	var my_env string
-	my_env = *env
+	var myCluster string
+	myCluster = *cluster
+	var myEnv string
+	myEnv = *env
 
-	admindb_conn, _ := admindb.Connect_to_admin_db()
-	err := admindb_conn.Ping()
+	admindbConn, _ := admindb.Connect_to_admin_db()
+	err := admindbConn.Ping()
 	if err != nil {
 		log.Fatal(err)
 	}
 	//	fmt.Println("Successfully Connected to: ", admindbname)
 
 	fmt.Println("Finding CNAMES for Cluster: ", *cluster, " in Env: ", *env)
-	admindb.GetCnamesForClusterEnv(admindb_conn, my_env, my_cluster, true)
+	admindb.GetCnamesForClusterEnv(admindbConn, myEnv, myCluster, true)
 
 	/*	if *CreateManagementTable == true {
 			admindb.CreateManagementTable(admindb_conn)
