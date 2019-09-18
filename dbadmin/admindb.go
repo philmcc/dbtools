@@ -267,7 +267,7 @@ func InsertCname(admindb_conn *sql.DB, cname string, clusterName string) {
 
 }
 
-func GetCnamesForClusterEnv(admindb_conn *sql.DB, env string, cluster string, allcnames bool) {
+func GetCnamesForClusterEnv(admindb_conn *sql.DB, env string, cluster string, allcnames bool, hostToCheck string) {
 
 	// insert into runs and return id
 	sqlStatement := "INSERT into runs (run_source) VALUES ($1)	RETURNING run_id"
@@ -325,9 +325,14 @@ func GetCnamesForClusterEnv(admindb_conn *sql.DB, env string, cluster string, al
 		}
 
 		// get HostName and ip address
-
 		ip_addr, hostname := network_tools.Get_CNAME_details(cname)
-		fmt.Println(cname, " - ", ip_addr, " - ", hostname)
+		if hostToCheck == "1" {
+			fmt.Println(cname, " - ", ip_addr, " - ", hostname)
+		} else {
+			if hostToCheck == hostname {
+				fmt.Println(cname, " - ", ip_addr, " - ", hostname)
+			}
+		}
 
 		// insert each one into the history table
 		sqlInsertHistory := "INSERT INTO cname_history (run_id, cname_id, hostName, ip_address) values ($1, $2, $3, $4);"
