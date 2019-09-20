@@ -1,3 +1,5 @@
+create extension ltree;
+
 CREATE TABLE account (
   account_id SERIAL PRIMARY KEY,
   account_name TEXT
@@ -43,18 +45,44 @@ account_id integer REFERENCES account(account_id)
 );
 
 CREATE TABLE node (
-	node_id SERIAL PRIMARY KEY,
-	hostname TEXT UNIQUE,
-	ip_address TEXT,
-	last_checked  TIMESTAMP NOT NULL DEFAULT NOW(),
-  parent_id int default 0,
-  cluster_id INT,
-  env_id INT,
-  collect_stats bool not null default false,
-  stats_frequency TEXT,
-  last_collected   TIMESTAMP,
-  account_id integer REFERENCES account(account_id)
-	);
+    node_id integer NOT NULL,
+    hostname text,
+    ip_address text,
+    last_checked timestamp without time zone NOT NULL,
+    parent_id integer,
+    cluster_id integer,
+    env_id integer,
+    collect_stats boolean NOT NULL,
+    stats_frequency text,
+    last_collected timestamp without time zone,
+    account_id integer,
+    parent_path ltree
+);
+CREATE INDEX node_parent_id_idx ON public.node USING btree (parent_id);
+CREATE INDEX node_parent_path_idx ON public.node USING gist (parent_path);
+
+CREATE OR REPLACE FUNCTION update_node_parent_path() RETURNS TRIGGER AS $$
+    DECLARE
+        path ltree;
+    BEGIN
+        IF NEW.parent_id = 0 THEN
+            NEW.parent_path = 'root'::ltree;
+        ELSEIF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' OR OLD.parent_id IS NULL OR OLD.parent_id != NEW.parent_id THEN
+            SELECT parent_path || node_id::text FROM node WHERE node_id = NEW.parent_id INTO path;
+            IF path IS NULL THEN
+                RAISE EXCEPTION 'Invalid parent_id %', NEW.parent_id;
+            END IF;
+            NEW.parent_path = path;
+        END IF;
+        RETURN NEW;
+    END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE TRIGGER parent_path_tgr
+    BEFORE INSERT OR UPDATE ON node
+    FOR EACH ROW EXECUTE PROCEDURE update_node_parent_path();
+
 
 CREATE TABLE STATS (
   stats_id SERIAL PRIMARY KEY,
@@ -213,21 +241,65 @@ WHERE env_id in (select env_id from environments where env ilike TRIM('sprint'))
   AND collect_stats is true;
 
 
-create view mapped_cluster as
-WITH RECURSIVE replicas AS (
-  SELECT n1.hostname, n1.node_id, n1.parent_id, e1.env, c1.cluster, n1.last_checked, n1.collect_stats
-  FROM node n1
-  INNER JOIN environments e1 ON e1.env_id = n1.env_id
-  INNER JOIN clusters c1 ON c1.cluster_id = n1.cluster_id
-  WHERE parent_id = 0
-  UNION
-  SELECT n.hostname, n.node_id, n.parent_id, e.env, c.cluster, n.last_checked, n.collect_stats
-  FROM node n
-         INNER JOIN replicas r ON r.node_id = n.parent_id
-         INNER JOIN environments e ON e.env_id = n.env_id
-         INNER JOIN clusters c ON c.cluster_id = n.cluster_id
-) SELECT * FROM replicas;
+  create or replace view current_cname_host as
+  select c.cname, ch1.hostname, c.cname_order
+from public.cname_history ch1,
+    (select max(run_id) run_id, cname_id
+        FROM public.cname_history ch2
+        group by cname_id) ch2,
+    cnames c
+WHERE ch2.run_id= ch1.run_id
+and ch2.cname_id = ch1.cname_id
+and c.cname_id = ch1.cname_id
+order by cname
+;
 
+
+  CREATE OR REPLACE VIEW mapped_cluster AS
+   WITH RECURSIVE replicas AS (
+           SELECT n1.hostname,
+              cname.cname,
+              n1.node_id,
+              n1.parent_id,
+              e1.env,
+              c1.cluster,
+              n1.last_checked,
+              n1.collect_stats,
+              cname.cname_order
+             FROM node n1
+               JOIN environments e1 ON e1.env_id = n1.env_id
+               JOIN clusters c1 ON c1.cluster_id = n1.cluster_id
+               LEFT JOIN current_cname_host cname ON n1.hostname = cname.hostname
+            WHERE n1.parent_id = 0
+          UNION
+           SELECT n.hostname,
+              cname.cname,
+              n.node_id,
+              n.parent_id,
+              e.env,
+              c.cluster,
+              n.last_checked,
+              n.collect_stats,
+              cname.cname_order
+             FROM node n
+               JOIN replicas r ON r.node_id = n.parent_id
+               JOIN environments e ON e.env_id = n.env_id
+               JOIN clusters c ON c.cluster_id = n.cluster_id
+               LEFT JOIN current_cname_host cname ON n.hostname = cname.hostname
+          )
+   SELECT replicas.hostname,
+      replicas.cname,
+      replicas.node_id,
+      replicas.parent_id,
+      replicas.env,
+      replicas.cluster,
+      replicas.last_checked,
+      replicas.collect_stats,
+      replicas.cname_order,
+      node.parent_path
+     FROM replicas, node
+     where replicas.node_id = node.node_id
+    ORDER BY node.parent_path, replicas.cname_order, replicas.hostname;
 
 
 

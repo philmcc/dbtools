@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"strings"
+	"time"
 
 	"github.com/rapidloop/pgmetrics"
 
@@ -352,30 +353,30 @@ func GetCnamesForClusterEnv(admindb_conn *sql.DB, env string, cluster string, al
 
 }
 
-func Populate_node_details(admindb_conn *sql.DB, node_to_check PsqlHost) (ret_node PsqlHost) {
-	fmt.Println("FUNCTION - Populate_node_details")
-	fmt.Println("Node To Check: ", node_to_check)
+func PopulateNodeDetails(admindb_conn *sql.DB, node_to_check PsqlHost, checkDate time.Time) (ret_node PsqlHost) {
+	//fmt.Println("FUNCTION - Populate_node_details")
+	//fmt.Println("Node To Check: ", node_to_check)
 
 	// if CName there use that to get ip address and host name
 	if node_to_check.CName != "" {
 		addr, err := net.LookupIP(node_to_check.CName)
 		if err != nil {
-			fmt.Println("Unknown addr")
+			//fmt.Println("Unknown addr")
 			node_to_check.IPAddr = addr[0].String()
 		} else {
 			node_to_check.IPAddr = addr[0].String()
-			fmt.Println("IPAddr: ", node_to_check.IPAddr)
+			//fmt.Println("IPAddr: ", node_to_check.IPAddr)
 		}
 	}
 
 	// if ip address there get host name and put it into HostName
 	host, err := net.LookupAddr(node_to_check.IPAddr)
 	if err != nil {
-		fmt.Println("Unknown host")
+		//fmt.Println("Unknown host")
 		node_to_check.HostName = "Unknown host"
 	} else {
 		node_to_check.HostName = strings.TrimRight(host[0], ".")
-		fmt.Println("Hostname: ", node_to_check.HostName)
+		//fmt.Println("Hostname: ", node_to_check.HostName)
 	}
 
 	// select on HostName from db and get HostID
@@ -393,36 +394,37 @@ func Populate_node_details(admindb_conn *sql.DB, node_to_check PsqlHost) (ret_no
 		row := admindb_conn.QueryRow(sqlStatement, node_to_check.HostName)
 		switch err := row.Scan(&node_id, &hostname, &ip_address); err {
 		case sql.ErrNoRows:
-			fmt.Println("No rows were returned!")
+			//fmt.Println("No rows were returned!")
 			// Row does not exist - Insert the row
-			sqlInsert := `Insert into node (hostName, ip_address, parent_id, env_id, cluster_id, last_checked) values ($1, $2, $3, $4, $5, now()) RETURNING node_id;`
-			err = admindb_conn.QueryRow(sqlInsert, node_to_check.HostName, node_to_check.IPAddr, node_to_check.ParentID, node_to_check.EnvID, node_to_check.ClusterID).Scan(&node_id)
+			sqlInsert := `Insert into node (hostName, ip_address, parent_id, env_id, cluster_id, last_checked) values ($1, $2, $3, $4, $5, $6) RETURNING node_id;`
+			err = admindb_conn.QueryRow(sqlInsert, node_to_check.HostName, node_to_check.IPAddr, node_to_check.ParentID, node_to_check.EnvID, node_to_check.ClusterID, checkDate).Scan(&node_id)
 			if err != nil {
 				panic(err)
 			}
 			node_to_check.HostID = node_id
 		case nil:
-			fmt.Println("no errors and row returned - update the record")
+			//fmt.Println("no errors and row returned - update the record")
 			// no errors and row returned - update the record
-			sqlUpdate := `Update node set ip_address = $2 , parent_id = $3, env_id = $4, cluster_id = $5, last_checked = now() where node_id = $1 RETURNING node_id;`
-			err := admindb_conn.QueryRow(sqlUpdate, node_id, node_to_check.IPAddr, node_to_check.ParentID, node_to_check.EnvID, node_to_check.ClusterID).Scan(&node_id)
+			sqlUpdate := `Update node set ip_address = $2 , parent_id = $3, env_id = $4, cluster_id = $5, last_checked = $6 where node_id = $1 RETURNING node_id;`
+			err := admindb_conn.QueryRow(sqlUpdate, node_id, node_to_check.IPAddr, node_to_check.ParentID, node_to_check.EnvID, node_to_check.ClusterID, checkDate).Scan(&node_id)
 			if err != nil {
 				fmt.Println("Error from the Update.")
 				panic(err)
 			}
-			fmt.Println("returned node : ", node_id)
+			//fmt.Println("returned node : ", node_id)
 			node_to_check.HostID = node_id
 		default:
 			panic(err)
 		}
 	}
-	fmt.Println(node_to_check)
-	//fmt.Println("LEAVING Populate_node_details")
+	//fmt.Println(node_to_check)
+
 	return node_to_check
 }
 
-func Get_replicated_hosts(admindb_conn *sql.DB, host_details PsqlHost) (returned_hosts []PsqlHost) {
-	fmt.Println("Function get_replicated_hosts for : ", host_details)
+func Get_replicated_hosts(admindb_conn *sql.DB, host_details PsqlHost, checkDate time.Time) (returned_hosts []PsqlHost) {
+	//fmt.Println("Function get_replicated_hosts for : ", host_details)
+
 	// loop through []hosts to check
 	// for each
 	// connect to db on host passed in
@@ -446,7 +448,7 @@ func Get_replicated_hosts(admindb_conn *sql.DB, host_details PsqlHost) (returned
 	//defer db.Close()
 	err = db.Ping()
 	if err != nil {
-		fmt.Println("Errored in the PING")
+		//fmt.Println("Errored in the PING")
 		//log.Fatal(err)
 	} else {
 		//fmt.Println("Successfully Connected to: ", dbname)
@@ -455,7 +457,7 @@ func Get_replicated_hosts(admindb_conn *sql.DB, host_details PsqlHost) (returned
 
 		sqlStatement := `select client_addr from pg_stat_replication;`
 		var current_host PsqlHost
-		fmt.Println("Current Host: ", current_host)
+		//fmt.Println("Current Host: ", current_host)
 		rows, err := db.Query(sqlStatement)
 		if err != nil {
 			// handle this error better than this
@@ -478,7 +480,7 @@ func Get_replicated_hosts(admindb_conn *sql.DB, host_details PsqlHost) (returned
 			current_host.ClusterID = host_details.ClusterID
 
 			//fmt.Println("Current Host : ", current_host)
-			current_host = Populate_node_details(admindb_conn, current_host)
+			current_host = PopulateNodeDetails(admindb_conn, current_host, checkDate)
 
 			// call get HostName and put in current_host
 
@@ -493,7 +495,7 @@ func Get_replicated_hosts(admindb_conn *sql.DB, host_details PsqlHost) (returned
 				//fmt.Println(HostName)
 
 				// Insert ParentID
-				fmt.Println("Parent ID: ", host_details.HostID)
+				//	fmt.Println("Parent ID: ", host_details.HostID)
 				current_host.ParentID = host_details.HostID
 
 				//append to returned hosts only if that host can be reached
@@ -515,7 +517,7 @@ func Get_replicated_hosts(admindb_conn *sql.DB, host_details PsqlHost) (returned
 }
 
 func Get_env_and_cluster_ids(admindb_conn *sql.DB, env string, cluster string) (env_id int, cluster_id int) {
-	fmt.Println("FUNCTION: Get_env_and_cluster_ids")
+	//fmt.Println("FUNCTION: Get_env_and_cluster_ids")
 	fmt.Println("Cluster: ", cluster, " in Env: ", env)
 
 	sqlStatement_env := `select env_id from environments where env ilike TRIM($1)`
@@ -544,9 +546,9 @@ func Get_env_and_cluster_ids(admindb_conn *sql.DB, env string, cluster string) (
 	return env_id, cluster_id
 }
 
-func ClusterMap(admindb_conn *sql.DB, env string, cluster string) {
+func ClusterMap(admindbConn *sql.DB, env string, cluster string) {
 	fmt.Println("MAPPING CLUSTER .....")
-
+	checkDate := time.Now()
 	/*
 	   type PsqlHost struct {
 	   	HostID int
@@ -560,10 +562,10 @@ func ClusterMap(admindb_conn *sql.DB, env string, cluster string) {
 
 	master := PsqlHost{}
 	//	fmt.Println("master: ",master)
-	hosts_to_check := make([]PsqlHost, 0)
-	checked_hosts := make([]PsqlHost, 0)
+	hostsToCheck := make([]PsqlHost, 0)
+	checkedHosts := make([]PsqlHost, 0)
 
-	env_id, cluster_id := Get_env_and_cluster_ids(admindb_conn, env, cluster)
+	envID, clusterID := Get_env_and_cluster_ids(admindbConn, env, cluster)
 
 	// Get master host name - return
 	// TODO - can update this to use the ids instead of the env and cluster strings now.
@@ -574,24 +576,24 @@ func ClusterMap(admindb_conn *sql.DB, env string, cluster string) {
 		AND cname_order = 1
 		LIMIT 1;`
 
-	row := admindb_conn.QueryRow(sqlStatement, env, cluster)
+	row := admindbConn.QueryRow(sqlStatement, env, cluster)
 	switch err := row.Scan(&master.CName); err {
 	case sql.ErrNoRows:
-		fmt.Println("No rows were returned!")
+	//	fmt.Println("No rows were returned!")
 	case nil:
-		fmt.Println(master.CName)
+	//	fmt.Println(master.CName)
 	default:
 		panic(err)
 	}
-	master.EnvID = env_id
-	master.ClusterID = cluster_id
+	master.EnvID = envID
+	master.ClusterID = clusterID
 
 	//fmt.Println("Master Before: ", master)
-	master = Populate_node_details(admindb_conn, master)
+	master = PopulateNodeDetails(admindbConn, master, checkDate)
 	//fmt.Println("Master After: ", master)
 	// Checking
 
-	fmt.Println("MASTER: ", master)
+	//fmt.Println("MASTER: ", master)
 	//for i, s := range hosts_to_check {
 	//	i = i
 	//	fmt.Println("hosts_to_check: ", s)
@@ -604,20 +606,20 @@ func ClusterMap(admindb_conn *sql.DB, env string, cluster string) {
 	master.IPAddr, master.HostName = network_tools.Get_CNAME_details(master.CName)
 	//fmt.Println("master Hostname: ",master.HostName, " - Master ip Address: ", master.IPAddr)
 
-	hosts_to_check = append(hosts_to_check, master)
+	hostsToCheck = append(hostsToCheck, master)
 
 	// Start with master - get replicated hots - add them to hosts to check - go through them adding additional hosts until there are none levt
-	for hosts_remaining := true; hosts_remaining == true; {
+	for hostsRemaining := true; hostsRemaining == true; {
 
-		returned_hosts := Get_replicated_hosts(admindb_conn, hosts_to_check[0])
-		checked_hosts = append(checked_hosts, hosts_to_check[0])
-		hosts_to_check = append(hosts_to_check, returned_hosts...)
+		returnedHosts := Get_replicated_hosts(admindbConn, hostsToCheck[0], checkDate)
+		checkedHosts = append(checkedHosts, hostsToCheck[0])
+		hostsToCheck = append(hostsToCheck, returnedHosts...)
 
-		hosts_to_check = hosts_to_check[1:]
-		fmt.Println("Hosts To Check: ", hosts_to_check)
+		hostsToCheck = hostsToCheck[1:]
+		//	fmt.Println("Hosts To Check: ", hosts_to_check)
 
-		if len(hosts_to_check) < 1 {
-			hosts_remaining = false
+		if len(hostsToCheck) < 1 {
+			hostsRemaining = false
 		}
 
 	}
