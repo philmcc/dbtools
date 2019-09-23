@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"strings"
 	"time"
+
+	"text/tabwriter"
 
 	"github.com/rapidloop/pgmetrics"
 
@@ -33,6 +36,21 @@ type PsqlHost struct {
 	ClusterID int
 	Stats     bool
 	AccountID int
+	Timelag   float32
+}
+
+type node struct {
+	padding    string
+	cname      sql.NullString
+	hostname   sql.NullString
+	nodeID     int
+	parentID   int
+	parentPath string
+	timeLag    string
+}
+
+func (n node) String() string {
+	return fmt.Sprintf("%s %s\t %s\t %s\t", n.padding, n.hostname.String, n.cname.String, n.timeLag)
 }
 
 func CreateManagementTable(admindb_conn *sql.DB) {
@@ -517,7 +535,7 @@ func Get_replicated_hosts(admindb_conn *sql.DB, host_details PsqlHost, checkDate
 }
 
 func Get_env_and_cluster_ids(admindb_conn *sql.DB, env string, cluster string) (env_id int, cluster_id int) {
-	//fmt.Println("FUNCTION: Get_env_and_cluster_ids")
+	fmt.Println("FUNCTION: Get_env_and_cluster_ids")
 	fmt.Println("Cluster: ", cluster, " in Env: ", env)
 
 	sqlStatement_env := `select env_id from environments where env ilike TRIM($1)`
@@ -629,6 +647,89 @@ func ClusterMap(admindbConn *sql.DB, env string, cluster string) {
 
 	// insert into database host or update host record with parent
 
+}
+
+func PrintMappedCluster(admindbConn *sql.DB, env string, cluster string) {
+	sqlStatement := `SELECT t.cname ,t.hostname, t.node_id, t.parent_id, t.parent_path
+											FROM public.mapped_cluster t
+											WHERE env ilike TRIM($1)
+    										AND cluster ilike TRIM($2)
+    										and last_checked = (select max(last_checked) FROM public.mapped_cluster t
+																						WHERE env  ilike TRIM($1)
+    																				AND cluster  ilike TRIM($2)
+																					 )
+    									;`
+
+	var anode node
+	var padding string
+	var level int
+	rows, err := admindbConn.Query(sqlStatement, env, cluster)
+	if err != nil {
+		panic(err)
+		// handle this error better than this
+	}
+	defer rows.Close()
+
+	const tabpadding = 3
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, tabpadding, ' ', tabwriter.Debug)
+	header := " Host\t Cname\t Replication Lag\t"
+	fmt.Fprintln(w, header)
+	fmt.Fprintln(w, "\t \t ")
+	for rows.Next() {
+		err = rows.Scan(&anode.cname, &anode.hostname, &anode.nodeID, &anode.parentID, &anode.parentPath)
+		if err != nil {
+			// handle this error
+			panic(err)
+		}
+		padding = ""
+		level = strings.Count(anode.parentPath, ".")
+
+		for i := 1; i <= level; i++ {
+			padding = padding + " --- "
+		}
+		anode.padding = padding
+
+		anode.timeLag = GetHostReplicationTimeLag(anode.hostname.String)
+
+		fmt.Fprintln(w, anode)
+
+	}
+	// get any error encountered during iteration
+	err = rows.Err()
+	if err != nil {
+		panic(err)
+	}
+	w.Flush()
+}
+
+func GetHostReplicationTimeLag(hostname string) (timeLag string) {
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
+		"dbname=postgres sslmode=disable",
+		hostname, port, user)
+	db, err := sql.Open("postgres", psqlInfo)
+	if err != nil {
+		log.Fatal(err)
+	}
+	//defer db.Close()
+	err = db.Ping()
+	if err != nil {
+		timeLag = ""
+		return timeLag
+		//log.Fatal(err)
+	}
+
+	sqlStatement := "select now()-pg_last_xact_replay_timestamp() as replication_lag;"
+
+	row := db.QueryRow(sqlStatement)
+	switch err := row.Scan(&timeLag); err {
+	case sql.ErrNoRows:
+		fmt.Println("No rows were returned!")
+	case nil:
+		//fmt.Println(ClusterID)
+	default:
+		panic(err)
+	}
+	return timeLag
 }
 
 func Get_run_id(source string) (run_id int) {
